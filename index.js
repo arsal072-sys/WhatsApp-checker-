@@ -1,9 +1,12 @@
 const express = require("express");
 const TeleBot = require("telebot");
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
-const qrcode = require("qrcode-terminal");
+const { 
+  default: makeWASocket, 
+  useMultiFileAuthState, 
+  DisconnectReason 
+} = require("@whiskeysockets/baileys");
 
-// ====== EXPRESS SERVER ======
+// ================= EXPRESS =================
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -15,43 +18,48 @@ app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
 
-// ====== TELEGRAM BOT ======
-const bot = new TeleBot("8675357851:AAEJ2I9NK9lfxJAqy74hh9l0CLGd3kkr2vM");
+// ================= TELEGRAM =================
+const bot = new TeleBot(process.env.TG_TOKEN);
 
 bot.on("/start", (msg) => {
-  return msg.reply("Telegram Bot is Online 🚀");
+  return msg.reply("Telegram Bot Online ✅");
 });
 
 bot.start();
 
-// ====== WHATSAPP CONNECTION ======
-async function connectToWhatsApp() {
-  const { state, saveCreds } = await useMultiFileAuthState("auth_info_baileys");
+// ================= WHATSAPP =================
+async function startWA() {
+  const { state, saveCreds } = await useMultiFileAuthState("auth");
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true   // ✅ QR show karega
+    printQRInTerminal: true,
+    browser: ["RenderBot", "Chrome", "1.0.0"],
   });
 
   sock.ev.on("creds.update", saveCreds);
 
-  sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect, qr } = update;
-
-    if (qr) {
-      console.log("📲 Scan this QR code:");
-      qrcode.generate(qr, { small: true });
-    }
+  sock.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update;
 
     if (connection === "open") {
-      console.log("✅ WhatsApp Connected!");
+      console.log("✅ WhatsApp Connected Successfully!");
     }
 
     if (connection === "close") {
-      console.log("❌ Connection closed. Reconnecting...");
-      connectToWhatsApp(); // 🔁 auto reconnect
+      const shouldReconnect =
+        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+
+      console.log("❌ Connection closed.");
+      
+      if (shouldReconnect) {
+        console.log("🔄 Reconnecting...");
+        startWA();
+      } else {
+        console.log("⚠ Logged out. Delete service & redeploy.");
+      }
     }
   });
 }
 
-connectToWhatsApp();
+startWA();
