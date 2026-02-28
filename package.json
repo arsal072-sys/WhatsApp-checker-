@@ -1,13 +1,14 @@
 {
-  "name": "whatsapp-telegram-bot",
+  "name": "whatsapp-checker",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
+    "express": "^4.18.2",
+    "telebot": "^1.4.1",
     "@whiskeysockets/baileys": "^6.6.0",
-    "qrcode-terminal": "^0.12.0",
-    "telebot": "^1.4.1"
+    "qrcode-terminal": "^0.12.0"
   }
 }
