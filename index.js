@@ -1,36 +1,31 @@
 const TeleBot = require('telebot');
-const { WAConnection, MessageType } = require('@adiwajshing/baileys');
-const fs = require('fs');
+// Yahan badlav kiya hai (whiskeysockets use hoga)
+const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const qrcode = require('qrcode-terminal');
 
-// Tera Naya Token (Already Updated)
 const bot = new TeleBot('8675357851:AAEnrZ7Pzd1yDGJl-KlOLgECF4RjkRdolEM');
 
 async function connectToWhatsApp() {
-    const conn = new WAConnection();
-
-    // Jab QR Code generate hoga, wo terminal mein dikhega
-    conn.on('qr', qr => {
-        console.log('🚀 BOT ONLINE! SCAN THIS QR CODE BELOW:');
-        console.log('------------------------------------------');
-        // Baileys library apne aap terminal mein QR print karti hai
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+    const sock = makeWASocket({
+        printQRInTerminal: true, // Ye seedha terminal mein QR dikhayega
+        auth: state
     });
 
-    // Jab WhatsApp connect ho jaye
-    conn.on('open', () => {
-        console.log('✅ WHATSAPP CONNECTED SUCCESSFULLY!');
-        const authInfo = conn.base64EncodedAuthInfo();
-        fs.writeFileSync('./session.json', JSON.stringify(authInfo, null, '\t'));
-    });
+    sock.ev.on('creds.update', saveCreds);
 
-    // Connection start
-    await conn.connect().catch(err => console.log("WA Connect Error: " + err));
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        if(qr) {
+            console.log('🚀 SCAN THIS QR CODE:');
+            qrcode.generate(qr, {small: true});
+        }
+        if(connection === 'open') {
+            console.log('✅ WHATSAPP CONNECTED!');
+        }
+    });
 }
 
-// Telegram Bot Commands
-bot.on('/start', (msg) => msg.reply('WhatsApp Checker Bot is Running! 🚀'));
-
-// Bot Start Karo
+bot.on('/start', (msg) => msg.reply('Bot is Online! 🚀'));
 bot.start();
-connectToWhatsApp().catch(err => console.log("Main Error: " + err));
-
-console.log('🚀 Service Started... Checking for QR Code...');
+connectToWhatsApp();
