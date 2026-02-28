@@ -3,7 +3,7 @@ const TeleBot = require('telebot');
 const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 
-const bot = new TeleBot('8675357851:AAEnrZ7Pzd1yDGJl-KlOLgECF4RjkRdolEM');
+const bot = new TeleBot(`8675357851:AAFTBqWMTjtVDHBiFE7qK2U9hWjlBLNUnaA');
 
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
